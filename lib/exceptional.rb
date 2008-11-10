@@ -187,6 +187,12 @@ module Exceptional
         @enabled = config['enabled'] unless config['enabled'].nil?
         @remote_port = config['remote-port'].to_i unless config['remote-port'].nil?
         @remote_host = config['remote-host'] unless config['remote-host'].nil?
+        
+        @proxy_host = config.fetch('proxy_host', nil)
+        @proxy_port = config.fetch('proxy_port', nil)
+        @proxy_user = config.fetch('proxy_user', nil)
+        @proxy_pass = config.fetch('proxy_pass', nil)
+        
       rescue Exception => e
         raise ConfigurationException.new("Unable to load configuration file:#{file} for environment:#{environment}")
       end
@@ -204,7 +210,7 @@ module Exceptional
         raise LicenseException.new("API Key must be configured") 
       end
       
-      http = Net::HTTP.new(remote_host, remote_port) 
+      http = Net::HTTP::Proxy(@proxy_host, @proxy_port, @proxy_user, @proxy_pass).new(remote_host, remote_port) 
       uri = "/#{method.to_s}?&api_key=#{@api_key}&protocol_version=#{::PROTOCOL_VERSION}"
       headers = { 'Content-Type' => 'application/x-gzip', 'Accept' => 'application/x-gzip' }
       compressed_data = CGI::escape(Zlib::Deflate.deflate(data, Zlib::BEST_SPEED))
